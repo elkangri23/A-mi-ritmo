@@ -3,11 +3,12 @@
 ## Entorno
 
 - Android Studio con Android SDK Platform 37 y herramientas de compilación instaladas.
-- JDK 17.
+- JDK 25 para el proceso Gradle. La versión está fijada en `gradle/gradle-daemon-jvm.properties`; Gradle puede descargarla desde las URL configuradas si no encuentra una instalación local.
+- JDK 17 como toolchain del módulo `shared` y destino de compilación Java/Kotlin. Tenlo instalado para que Gradle pueda compilar ese módulo.
 - Windows: usar `gradlew.bat` desde PowerShell o la terminal de Android Studio. En macOS/Linux, usar `./gradlew`.
 - El proyecto contiene tres módulos: `shared` (modelo, formato JSON y protocolo), `phone` (app de teléfono) y `wear` (app de reloj).
 
-El wrapper está fijado a Gradle 9.5.0 en `gradle/wrapper/gradle-wrapper.properties`; al compilar por primera vez, Gradle puede descargar esa distribución y dependencias.
+El wrapper está fijado a Gradle 9.5.0 en `gradle/wrapper/gradle-wrapper.properties`; al compilar por primera vez, Gradle puede descargar esa distribución y dependencias. Gradle usa el JDK 25 para su proceso daemon según los criterios versionados del repositorio ([documentación de Gradle](https://docs.gradle.org/current/userguide/gradle_daemon.html#sec:daemon_jvm_criteria)).
 
 ## Compilación local
 
@@ -66,7 +67,7 @@ Los valores de referencia se encuentran en el archivo `SHA256SUMS.txt` del paque
 | Teléfono | 30 (Android 11) | 36 | Android 11 o posterior. El Samsung Galaxy S8 con Android 9 no cumple. |
 | Wear OS | 30 | 35 | Wear OS 3 o posterior según el mínimo del checklist de QA. Galaxy Watch7 es el reloj de referencia; falta documentar una aceptación física. |
 
-Ambos módulos se compilan con `compileSdk = 37` y Java 17. El Galaxy A13 varía según la variante y su actualización instalada: confirma Android en **Ajustes > Acerca del teléfono > Información de software**. Android 17 en el S23 Ultra es un dato facilitado por su propietario y todavía requiere prueba de instalación/funcionamiento en ese dispositivo.
+Ambos módulos Android usan `compileSdk = 37` y generan código Java compatible con la versión 17. El proceso Gradle se ejecuta con JDK 25; el módulo compartido declara JDK 17 como toolchain de Kotlin. El Galaxy A13 varía según la variante y su actualización instalada: confirma Android en **Ajustes > Acerca del teléfono > Información de software**. Android 17 en el S23 Ultra es un dato facilitado por su propietario y todavía requiere prueba de instalación/funcionamiento en ese dispositivo.
 
 ## Plan de prueba
 

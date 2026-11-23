@@ -10,7 +10,7 @@ Este documento presenta el backlog actual en español. Las prioridades `P0` señ
 | FND-02 | P0 | Hecho | Definir modelo portable del guion y bloques estructurados. | Título, secciones, énfasis, pausas, listas y tablas serializables. |
 | FND-03 | P0 | Hecho | Añadir códec JSON versionado y validación. | Leer/escribir versión compatible, rechazar contenido inválido o versión futura con error claro. |
 | FND-04 | P0 | Hecho | Definir órdenes, confirmaciones, estado y ancla del lector. | El teléfono y el reloj comparten contratos y la sesión invalida órdenes antiguas. |
-| FND-05 | P0 | Hecho | Fijar toolchain Gradle/JDK. | Compilación del módulo compartido en Gradle 9.5 y Java 17. |
+| FND-05 | P0 | Hecho | Fijar toolchain Gradle/JDK. | Wrapper Gradle 9.5; daemon Gradle en JDK 25; toolchain/código Java-Kotlin en JDK 17. |
 | FND-06 | P0 | Hecho | Añadir prueba automatizada del contrato JSON. | Prueba unitaria en `shared/src/test`; ampliar cobertura antes de publicación según riesgo. |
 
 ## Biblioteca e importación del teléfono

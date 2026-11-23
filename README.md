@@ -30,7 +30,7 @@ Las instrucciones detalladas de instalación manual, compilación y comprobació
 | Teléfono | Android 11, API 30 | API 36 | 0.1.0 (código 1) | Requiere una versión de Android que cumpla `minSdk` 30. |
 | Reloj | API 30 (Wear OS 3 o posterior en el plan de QA) | API 35 | 0.1.0 (código 1000001) | El reloj controla la lectura del teléfono; no muestra el guion completo. |
 
-Compilación revisada con SDK 37 y Java 17. La compatibilidad real depende también del fabricante, los servicios de Google Play y el enlace teléfono-reloj; la lista de versiones no sustituye la prueba en el dispositivo. El Galaxy S8 con Android 9 queda por debajo del mínimo. El Galaxy A13 debe revisarse según la versión instalada en la unidad. El S23 Ultra con Android 17 indicado por la persona propietaria supera nominalmente el mínimo; falta registrar QA en el equipo físico. El reloj de referencia es Samsung Galaxy Watch7.
+Configuración de compilación: Android SDK 37, JDK 25 para el proceso Gradle y JDK 17 como toolchain/objetivo de compilación Java y Kotlin. Gradle puede descargar el JDK 25 indicado por el repositorio si no está instalado localmente; el módulo compartido necesita además su toolchain JDK 17. La compatibilidad real depende también del fabricante, los servicios de Google Play y el enlace teléfono-reloj; la lista de versiones no sustituye la prueba en el dispositivo. El Galaxy S8 con Android 9 queda por debajo del mínimo. El Galaxy A13 debe revisarse según la versión instalada en la unidad. El S23 Ultra con Android 17 indicado por la persona propietaria supera nominalmente el mínimo; falta registrar QA en el equipo físico. El reloj de referencia es Samsung Galaxy Watch7.
 
 ## Pruebas
 
