@@ -37,7 +37,7 @@ Este documento presenta el backlog actual en español. Las prioridades `P0` señ
 
 | ID | Prioridad | Estado | Trabajo | Criterio de aceptación |
 |---|---|---|---|---|
-| WAT-01 | P0 | Implementado en emulador; Watch7 pendiente | Pantalla remota compacta con conexión y resumen. | Estado desconectado claro y disposición legible en reloj redondo; validar Watch7 real. |
+| WAT-01 | P0 | Pantalla desconectada verificada en AVD Wear OS 3; Watch7 pendiente | Pantalla remota compacta con conexión y resumen. | Estado desconectado claro y disposición legible en reloj redondo; validar Watch7 real. |
 | WAT-02 | P0 | Código implementado; transporte pendiente de emparejamiento real | Sincronizar sesión, snapshots, ACK, identificadores y secuencias con Data Layer. | Probar descubrimiento, entrega, orden y sesión en teléfono + reloj físicos. |
 | WAT-03 | P0 | Implementado; controles físicos pendientes | Play/pausa, velocidad, sección anterior/siguiente, inicio y rebobinado mantenido. | La acción se confirma en teléfono y se detiene al soltar el control de rebobinado. |
 | WAT-04 | P0 | Implementado; prueba física pendiente | Recuperar sesión al desconectar/reconectar y caducar órdenes de rebobinado. | No repetir órdenes de sesiones antiguas; resincronizar el estado actual. |

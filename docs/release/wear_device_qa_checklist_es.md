@@ -38,6 +38,17 @@ El paquete contiene los APK de teléfono y Wear, un icono y un gráfico de funci
 | 11 | Forzar cierre del teléfono durante lectura; reabrir lector y reloj | Cambia la época del teléfono; el reloj se sincroniza con la nueva sesión y los ACK antiguos se ignoran. | ☐ Pasa ☐ Falla |
 | 12 | Repetir órdenes con Internet desactivado y Bluetooth activo | La biblioteca y lectura siguen disponibles offline; registrar si el control Wear funciona por enlace local en esta configuración. | ☐ Pasa ☐ Falla |
 
+## Resultados limitados en emuladores
+
+Estos resultados son de desarrollo y no sustituyen la aceptación física del S23 Ultra y Watch7.
+
+| Fecha | Dispositivo virtual y paquete | Escenario observado | Resultado |
+|---|---|---|---|
+| 2026-11-23 | AVD teléfono API 30; paquete r29, `com.teleprompter.amiritmo` (0.1.0, código 1) | La app abre. En primer inicio solicita autorizar `Documents/TelePrompter`. La selección accidental de la raíz `Documents` se rechaza con un mensaje y no crea un guion. No se completó la configuración de carpeta ni el flujo de lectura con este APK. | Inicio: pasa. Selección correcta de carpeta: pendiente. |
+| 2026-11-23 | AVD Wear OS 3 / API 30; paquete r29, `com.teleprompter.amiritmo` (0.1.0, código 1000001) | Abre la pantalla de control desconectada: indica que se instale y abra la app del teléfono, muestra 0 %, no muestra tiempo restante y deja Play desactivado. No se probó emparejamiento. | Escenario 1: pasa en emulador. |
+
+En ambas instalaciones r29 se confirmó el paquete y el número de versión; el registro `AndroidRuntime` no mostró excepciones fatales durante esta comprobación. No se marca ningún escenario físico como aceptado.
+
 ## Incidencias y evidencia
 
 - Pasos para reproducir: ____________________

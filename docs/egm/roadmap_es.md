@@ -10,8 +10,8 @@
 | 1. Base compartida | Modelo portable de guion, JSON versión 1, estado y órdenes de reproducción, ancla de posición y herramientas Kotlin/Gradle. | Implementada; existe prueba unitaria del códec JSON. |
 | 2. Biblioteca e importación en teléfono | Seleccionar carpeta local, importar formatos, revisar, guardar y transferir guiones JSON sin conexión. | App y flujos principales implementados. Validar fidelidad en documentos reales y dispositivos Samsung. |
 | 3. Lector de teléfono | Lectura en atril, secciones, marcador fijo, reproducción, pausa, velocidad, cuenta atrás, posición local y pantalla activa. | Implementado y ejercitado en AVD API 30; legibilidad en atril y revisión física pendientes. |
-| 4. Mando Wear OS | App independiente de reloj con Data Layer, estado confirmado, ACK de órdenes y control de lectura. | Implementado; probar teléfono emparejado, reintentos y reconexión en Watch7 físico. |
-| 5. Build de revisión | APK debug de teléfono y Wear, pruebas de aceptación, evidencia y aprobación interna. | r29 disponible; revisión física aún abierta. |
+| 4. Mando Wear OS | App independiente de reloj con Data Layer, estado confirmado, ACK de órdenes y control de lectura. | Implementado; la pantalla sin conexión se verificó en AVD Wear OS 3. Emparejamiento, reintentos y reconexión en Watch7 físico pendientes. |
+| 5. Build de revisión | APK debug de teléfono y Wear, pruebas de aceptación, evidencia y aprobación interna. | r29 instalado en AVD API 30; el escenario de reloj desconectado pasa. La configuración inicial del teléfono y la revisión física siguen abiertas. |
 | 6. Publicación | Firma, artefactos de publicación, ficha, privacidad, Data safety, capturas finales y revisión de Google Play. | No iniciada como lanzamiento público; quedan bloqueos previos. |
 
 ## Criterios de salida pendientes
