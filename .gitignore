@@ -1,0 +1,14 @@
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+.kotlin/
+/dist/*
+!/dist/A-mi-ritmo-review-0.1.0-r29.zip
+/docs/egm/*.md
+!/docs/egm/resumen_es.md
+!/docs/egm/roadmap_es.md
+!/docs/egm/backlog_es.md
+/docs/egm/context_sources/
+/docs/release/assets/draft-screenshots/
