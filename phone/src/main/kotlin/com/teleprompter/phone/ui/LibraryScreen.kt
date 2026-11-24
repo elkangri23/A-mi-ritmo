@@ -1,6 +1,7 @@
 package com.teleprompter.phone.ui
 
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
@@ -111,36 +112,6 @@ fun LibraryScreen(
         pendingReviewWarning = warning
     }
 
-    fun startImport(
-        formatLabel: String,
-        fallbackError: String,
-        warning: String? = null,
-        prepare: () -> PreparedScript,
-    ) {
-        if (activeImportJob?.isActive == true) return
-        isBusy = true
-        activeImportLabel = "Preparando $formatLabel…"
-        activeImportJob = coroutineScope.launch {
-            try {
-                val draft = withContext(Dispatchers.IO) { prepare() }
-                currentCoroutineContext().ensureActive()
-                stageReview(draft, warning)
-                showMessage("${draft.title} listo para revisar")
-            } catch (_: CancellationException) {
-                // The current parser reaches its next safe boundary; its result is discarded.
-                coroutineScope.launch { showMessage("Importación cancelada; no se guardó ningún borrador.") }
-            } catch (_: OutOfMemoryError) {
-                showMessage("El documento requiere más memoria de la disponible. Libera espacio de memoria o prueba una versión más ligera; no se guardó ningún borrador.")
-            } catch (error: Exception) {
-                showMessage(insufficientScratchSpace(formatLabel, error)?.message ?: userFacingError(error, fallbackError))
-            } finally {
-                activeImportLabel = null
-                activeImportJob = null
-                isBusy = false
-            }
-        }
-    }
-
     LaunchedEffect(selectedFolder) {
         if (selectedFolder != null) {
             try {
@@ -181,66 +152,70 @@ fun LibraryScreen(
         }
     }
 
-    val preparedJsonPicker = rememberLauncherForActivityResult(
+    val sourceDocumentPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
     ) { sourceUri: Uri? ->
-        if (sourceUri != null) startImport("el guion JSON", "No se pudo importar el guion JSON.") {
-            repository.prepareJson(sourceUri)
+        if (sourceUri != null && activeImportJob?.isActive != true) {
+            isBusy = true
+            activeImportLabel = "Preparando documento…"
+            activeImportJob = coroutineScope.launch {
+                try {
+                    val displayName = withContext(Dispatchers.IO) {
+                        context.contentResolver.query(
+                            sourceUri,
+                            arrayOf(OpenableColumns.DISPLAY_NAME),
+                            null,
+                            null,
+                            null,
+                        )?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+                    }.orEmpty()
+                    val extension = displayName.substringAfterLast('.', "").lowercase()
+                    val handler = when (extension) {
+                        "json" -> DocumentImportHandler("el guion JSON", null) { repository.prepareJson(sourceUri) }
+                        "txt" -> DocumentImportHandler(
+                            "el archivo de texto",
+                            "Texto plano: se conservan el texto y los saltos de párrafo. Comprueba las separaciones y añade los subtítulos que necesites.",
+                        ) { repository.preparePlainText(sourceUri) }
+                        "md" -> DocumentImportHandler(
+                            "Markdown",
+                            "Markdown: se convierten títulos, listas, tablas GFM y énfasis básicos. Las listas anidadas se aplanan y la numeración puede reiniciarse; otros estilos o extensiones pueden simplificarse.",
+                        ) { repository.prepareMarkdown(sourceUri) }
+                        "htm", "html" -> DocumentImportHandler(
+                            "HTML",
+                            "HTML estático: se importa el texto y la estructura básica. Las listas anidadas se aplanan y la numeración puede reiniciarse; los estilos complejos y algunos elementos pueden no conservarse.",
+                        ) { repository.prepareHtml(sourceUri) }
+                        "pdf" -> DocumentImportHandler(
+                            "PDF",
+                            "PDF: se extrae el texto seleccionable. El orden de lectura, las columnas y los saltos pueden variar; los PDF escaneados no se importan.",
+                        ) { repository.preparePdf(sourceUri) }
+                        "doc", "docx" -> DocumentImportHandler(
+                            "Word",
+                            "Word: DOCX conserva títulos, listas, tablas y énfasis básicos; los niveles y la numeración de listas pueden simplificarse. DOC se extrae como texto y puede perder formato. Revisa secciones y tablas.",
+                        ) { repository.prepareWord(sourceUri) }
+                        "odt" -> DocumentImportHandler(
+                            "ODT",
+                            "ODT: se conservan estructuras y énfasis básicos. Las listas anidadas se aplanan y la numeración puede reiniciarse; la maquetación y los estilos complejos pueden cambiar.",
+                        ) { repository.prepareOdt(sourceUri) }
+                        else -> throw UnsupportedDocumentImportFormatException()
+                    }
+                    activeImportLabel = "Preparando ${handler.label}…"
+                    val draft = withContext(Dispatchers.IO) { handler.prepare() }
+                    currentCoroutineContext().ensureActive()
+                    stageReview(draft, handler.warning)
+                    showMessage("${draft.title} listo para revisar")
+                } catch (_: CancellationException) {
+                    coroutineScope.launch { showMessage("Importación cancelada; no se guardó ningún borrador.") }
+                } catch (_: OutOfMemoryError) {
+                    showMessage("El documento requiere más memoria de la disponible. Libera espacio de memoria o prueba una versión más ligera; no se guardó ningún borrador.")
+                } catch (error: Exception) {
+                    showMessage(insufficientScratchSpace("el documento", error)?.message ?: userFacingError(error, "No se pudo importar el documento."))
+                } finally {
+                    activeImportLabel = null
+                    activeImportJob = null
+                    isBusy = false
+                }
+            }
         }
-    }
-
-    val plainTextPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { sourceUri: Uri? ->
-        if (sourceUri != null) startImport(
-            "el archivo de texto", "No se pudo importar el archivo de texto.",
-            "Texto plano: se conservan el texto y los saltos de párrafo. Comprueba las separaciones y añade los subtítulos que necesites.",
-        ) { repository.preparePlainText(sourceUri) }
-    }
-
-    val markdownPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { sourceUri: Uri? ->
-        if (sourceUri != null) startImport(
-            "Markdown", "No se pudo importar Markdown.",
-            "Markdown: se convierten títulos, listas, tablas GFM y énfasis básicos. Las listas anidadas se aplanan y la numeración puede reiniciarse; otros estilos o extensiones pueden simplificarse.",
-        ) { repository.prepareMarkdown(sourceUri) }
-    }
-
-    val htmlPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { sourceUri: Uri? ->
-        if (sourceUri != null) startImport(
-            "HTML", "No se pudo importar HTML.",
-            "HTML estático: se importa el texto y la estructura básica. Las listas anidadas se aplanan y la numeración puede reiniciarse; los estilos complejos y algunos elementos pueden no conservarse.",
-        ) { repository.prepareHtml(sourceUri) }
-    }
-
-    val pdfPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { sourceUri: Uri? ->
-        if (sourceUri != null) startImport(
-            "PDF", "No se pudo importar el PDF.",
-            "PDF: se extrae el texto seleccionable. El orden de lectura, las columnas y los saltos pueden variar; los PDF escaneados no se importan.",
-        ) { repository.preparePdf(sourceUri) }
-    }
-
-    val wordPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { sourceUri: Uri? ->
-        if (sourceUri != null) startImport(
-            "Word", "No se pudo importar Word.",
-            "Word: DOCX conserva títulos, listas, tablas y énfasis básicos; los niveles y la numeración de listas pueden simplificarse. DOC se extrae como texto y puede perder formato. Revisa secciones y tablas.",
-        ) { repository.prepareWord(sourceUri) }
-    }
-
-    val odtPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { sourceUri: Uri? ->
-        if (sourceUri != null) startImport(
-            "ODT", "No se pudo importar ODT.",
-            "ODT: se conservan estructuras y énfasis básicos. Las listas anidadas se aplanan y la numeración puede reiniciarse; la maquetación y los estilos complejos pueden cambiar.",
-        ) { repository.prepareOdt(sourceUri) }
     }
 
     val exportPicker = rememberLauncherForActivityResult(
@@ -478,53 +453,11 @@ fun LibraryScreen(
                 folderSelected = selectedFolder != null,
                 isBusy = isBusy,
                 onSelectFolder = { folderPicker.launch(DocumentPicker.initialLibraryParentUri) },
-                onImportPreparedJson = {
+                onImportDocument = {
                     if (selectedFolder == null) {
                         coroutineScope.launch { showMessage("Elige primero la carpeta Documents/TelePrompter.") }
                     } else {
-                        preparedJsonPicker.launch(arrayOf(DocumentPicker.JSON_MIME_TYPE, "text/*", "*/*"))
-                    }
-                },
-                onImportPlainText = {
-                    if (selectedFolder == null) {
-                        coroutineScope.launch { showMessage("Elige primero la carpeta Documents/TelePrompter.") }
-                    } else {
-                        plainTextPicker.launch(arrayOf("text/plain", "text/*", "*/*"))
-                    }
-                },
-                onImportMarkdown = {
-                    if (selectedFolder == null) {
-                        coroutineScope.launch { showMessage("Elige primero la carpeta Documents/TelePrompter.") }
-                    } else {
-                        markdownPicker.launch(arrayOf("text/markdown", "text/*", "*/*"))
-                    }
-                },
-                onImportHtml = {
-                    if (selectedFolder == null) {
-                        coroutineScope.launch { showMessage("Elige primero la carpeta Documents/TelePrompter.") }
-                    } else {
-                        htmlPicker.launch(arrayOf("text/html", "application/xhtml+xml", "text/*", "*/*"))
-                    }
-                },
-                onImportPdf = {
-                    if (selectedFolder == null) {
-                        coroutineScope.launch { showMessage("Elige primero la carpeta Documents/TelePrompter.") }
-                    } else {
-                        pdfPicker.launch(arrayOf("application/pdf", "*/*"))
-                    }
-                },
-                onImportWord = {
-                    if (selectedFolder == null) {
-                        coroutineScope.launch { showMessage("Elige primero la carpeta Documents/TelePrompter.") }
-                    } else {
-                        wordPicker.launch(arrayOf("application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "*/*"))
-                    }
-                },
-                onImportOdt = {
-                    if (selectedFolder == null) {
-                        coroutineScope.launch { showMessage("Elige primero la carpeta Documents/TelePrompter.") }
-                    } else {
-                        odtPicker.launch(arrayOf("application/vnd.oasis.opendocument.text", "*/*"))
+                        sourceDocumentPicker.launch(DocumentPicker.sourceMimeTypes)
                     }
                 },
                 onCreateNote = {
@@ -566,13 +499,7 @@ private fun LibraryContent(
     folderSelected: Boolean,
     isBusy: Boolean,
     onSelectFolder: () -> Unit,
-    onImportPreparedJson: () -> Unit,
-    onImportPlainText: () -> Unit,
-    onImportMarkdown: () -> Unit,
-    onImportHtml: () -> Unit,
-    onImportPdf: () -> Unit,
-    onImportWord: () -> Unit,
-    onImportOdt: () -> Unit,
+    onImportDocument: () -> Unit,
     onCreateNote: () -> Unit,
     onOpen: (ScriptFile) -> Unit,
     onExport: (ScriptFile) -> Unit,
@@ -604,58 +531,14 @@ private fun LibraryContent(
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
             enabled = !isBusy && folderSelected,
-            onClick = onImportPreparedJson,
+            onClick = onImportDocument,
         ) {
-            Text("Importar guion preparado (JSON)")
+            Text("Importar documento")
         }
-
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isBusy && folderSelected,
-            onClick = onImportPlainText,
-        ) {
-            Text("Importar archivo de texto (.txt)")
-        }
-
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isBusy && folderSelected,
-            onClick = onImportMarkdown,
-        ) {
-            Text("Importar Markdown (.md)")
-        }
-
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isBusy && folderSelected,
-            onClick = onImportHtml,
-        ) {
-            Text("Importar HTML (.htm, .html)")
-        }
-
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isBusy && folderSelected,
-            onClick = onImportPdf,
-        ) {
-            Text("Importar PDF")
-        }
-
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isBusy && folderSelected,
-            onClick = onImportWord,
-        ) {
-            Text("Importar Word (.doc, .docx)")
-        }
-
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isBusy && folderSelected,
-            onClick = onImportOdt,
-        ) {
-            Text("Importar OpenDocument (.odt)")
-        }
+        Text(
+            "Admite PDF, DOC/DOCX, ODT, Markdown, TXT, HTML y guiones JSON. Se preparará para que lo revises antes de guardarlo.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
 
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
@@ -696,6 +579,8 @@ private fun userFacingError(error: Throwable, fallback: String): String {
     return when (error) {
         is UnsupportedScriptSchemaException ->
             "Este guion usa la versión de formato ${error.foundVersion}, que esta versión de A mi ritmo no admite. Conserva el archivo original para abrirlo con una versión compatible."
+        is UnsupportedDocumentImportFormatException ->
+            "No se pudo procesar el archivo: su formato no está admitido. Se aceptan PDF, DOC/DOCX, ODT, Markdown (.md), texto (.txt), HTML (.htm/.html) y guiones JSON."
         is ScriptFormatException -> when (error.message) {
             "The script JSON root must be an object" -> "El archivo JSON del guion debe contener un objeto válido."
             "The script file is not valid JSON" -> "El archivo seleccionado no contiene un JSON válido."
@@ -706,6 +591,14 @@ private fun userFacingError(error: Throwable, fallback: String): String {
         else -> fallback
     }
 }
+
+private data class DocumentImportHandler(
+    val label: String,
+    val warning: String?,
+    val prepare: () -> PreparedScript,
+)
+
+private class UnsupportedDocumentImportFormatException : java.io.IOException()
 
 private fun reviewValidationError(script: PreparedScript): String? {
     if (script.title.isBlank()) return "Escribe un título para el guion."

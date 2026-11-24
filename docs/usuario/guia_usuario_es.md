@@ -26,7 +26,7 @@ La carpeta seleccionada contiene los guiones preparados en formato JSON. El docu
 
 ## Importar o crear un guion
 
-La biblioteca ofrece estas entradas:
+En la biblioteca pulsa **Importar documento** y elige el archivo. La app detecta su extensión, informa si el formato no se admite y, si puede procesarlo, abre un borrador para revisar antes de guardarlo. Admite:
 
 | Tipo | Extensiones / método | Qué conviene revisar |
 |---|---|---|
@@ -45,7 +45,7 @@ La app no reconoce escritura a mano ni incluye OCR. Después de cualquier import
 
 La pantalla de revisión permite comprobar el contenido y preparar la estructura de lectura antes de añadirlo a la biblioteca. Usa subtítulos claros para separar el guion en secciones. Los controles de aspecto permiten ajustar tamaño de letra, colores e interlineado; revisa que el contraste se lea bien desde el atril.
 
-Al guardar, el guion preparado se escribe como JSON en la carpeta local elegida. La posición de lectura se guarda aparte, localmente en el teléfono. Exporta el JSON desde la app para trasladar el guion a otro móvil; al abrirlo en el segundo teléfono, elige una carpeta de guiones y usa **Importar guion preparado (JSON)**. El JSON exportado no incluye el marcador de lectura de origen.
+Al guardar, el guion preparado se escribe como JSON en la carpeta local elegida. La posición de lectura se guarda aparte, localmente en el teléfono. Exporta el JSON desde la app para trasladar el guion a otro móvil; al abrirlo en el segundo teléfono, elige una carpeta de guiones y usa **Importar documento** para seleccionar el JSON. El JSON exportado no incluye el marcador de lectura de origen.
 
 ## Leer desde el teléfono
 
